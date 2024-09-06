@@ -25,7 +25,6 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     path: "latestMessage.sender",
     select: "name pic email",
   });
-  console.log(isChat, "this is the log for is chat");
 
   if (isChat.length > 0) {
     res.send(isChat[0]);
