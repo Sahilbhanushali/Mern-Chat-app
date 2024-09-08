@@ -27,7 +27,6 @@ const GroupChatModal = ({ children }) => {
 
   return (
     <>
-      {/* this Comment is for temp comit purpose for the streak you have to remove it */}
       <span onClick={onOpen}>{children}</span>
 
       <Modal isOpen={isOpen} onClose={onClose}>
