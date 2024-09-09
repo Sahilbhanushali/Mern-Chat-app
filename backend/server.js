@@ -2,6 +2,7 @@ const express = require("express");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoute");
+const messageRoutes = require("./routes/messageRoute");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 const app = express();
@@ -27,6 +28,13 @@ app.use(
     next();
   },
   chatRoutes
+);
+app.use(
+  "/api/message",
+  (req, res, next) => {
+    next();
+  },
+  messageRoutes
 );
 
 app.use(notFound);

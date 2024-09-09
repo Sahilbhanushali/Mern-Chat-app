@@ -7,7 +7,7 @@ import ChatLoading from "./ChatLoading";
 import { getSender } from "../config/ChatLogics";
 import GroupChatModal from "./miscellaneous/GroupChatModal";
 
-const MyChats = () => {
+const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState(null);
   const { user, selectedChat, setSelectedChat, chats, setChats } = ChatState();
   const toast = useToast();
@@ -46,7 +46,7 @@ const MyChats = () => {
     if (userInfo && userInfo.token) {
       fetchChats();
     }
-  }, [user]);
+  }, [fetchAgain]);
 
   return (
     <Box
