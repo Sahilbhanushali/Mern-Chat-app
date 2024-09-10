@@ -15,6 +15,10 @@ import ProfileModal from "./miscellaneous/ProfileModal";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import axios from "axios";
 import ScrollableChat from "./ScrollableChat";
+import io from "socket.io-client";
+
+const ENDPOINT = "http://localhost:5000";
+var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const { user, selectedChat, setSelectedChat } = ChatState();
@@ -22,6 +26,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const toast = useToast();
 
@@ -40,12 +45,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         `/api/message/${selectedChat._id}`,
         config
       );
-
-      // Log the fetched messages
-      console.log("Fetched messages:", data);
-
       setMessages(data);
       setLoading(false);
+
+      socket.emit("join chat", selectedChat._id);
     } catch (error) {
       toast({
         title: "Error Occurred",
@@ -60,7 +63,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connection", () => setSocketConnected(true));
+  }, []);
+
+  useEffect(() => {
     fetchMessages();
+    selectedChatCompare = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    socket.on("message received", (newMessageReceived) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageReceived.chat._id
+      ) {
+        console.log(
+          "New message received in a different chat:",
+          newMessageReceived
+        );
+      } else {
+        setMessages((prevMessages) => [...prevMessages, newMessageReceived]);
+      }
+    });
+
+    // Cleanup function to avoid duplicate listeners
+    return () => {
+      socket.off("message received");
+    };
   }, [selectedChat]);
 
   const sendMessage = async (e) => {
@@ -72,20 +103,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             Authorization: `Bearer ${user.token}`,
           },
         };
+        const messageToSend = newMessage;
         setNewMessage("");
+
         const { data } = await axios.post(
           "/api/message",
           {
-            content: newMessage,
+            content: messageToSend,
             chatId: selectedChat._id,
           },
           config
         );
 
-        // Log the sent message
-        console.log("Sent message:", data);
-
-        setMessages([...messages, data]);
+        socket.emit("new message", data);
+        setMessages((prevMessages) => [...prevMessages, data]);
       } catch (error) {
         toast({
           title: "Error Occurred",
